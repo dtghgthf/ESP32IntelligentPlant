@@ -1300,3 +1300,6 @@ Account{name=..., path=..., type=PREDICT}
 2023-09-11 17:16:00.197 [pool-3-thread-1] INFO  com.rs.mv.mvvs.client.account.AccountManager - [client:40010105]load account manager finish
 2023-09-11 17:16:00.197 [pool-3-thread-1] INFO  com.rs.mv.mvvs.instance.userspace.UserspaceManager - [framework:30010402]config file(C:\Users\dtghgthf/.rmv/config) watcher launch successful
 2023-09-11 17:16:05.494 [pool-3-thread-1] INFO  com.rs.mv.mvvs.client.catalog.from.scan.CurrentPathScanner - [client:400205]scan file in current open file directory(C:/Users/dtghgthf/Documents/PlatformIO/Projects/ESP32IntelligentPlant)
+2023-09-11 17:17:57.435 [pool-3-thread-1] INFO  com.rs.mv.mvvs.client.catalog.from.scan.CurrentPathScanner - [client:400205]scan file in current open file directory(C:/Users/dtghgthf/Documents/PlatformIO/Projects/ESP32IntelligentPlant)
+2023-09-11 17:17:58.126 [pool-3-thread-1] INFO  com.rs.mv.mvvs.client.catalog.from.scan.CurrentPathScanner - [client:400205]scan file in current open file directory(C:/Users/dtghgthf/Documents/PlatformIO/Projects/ESP32IntelligentPlant/src)
+2023-09-11 17:19:46.537 [pool-3-thread-1] INFO  com.rs.mv.mvvs.client.catalog.from.scan.CurrentPathScanner - [client:400205]scan file in current open file directory(C:/Users/dtghgthf/Documents/PlatformIO/Projects/ESP32IntelligentPlant/src)
