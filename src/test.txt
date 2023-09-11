@@ -1,0 +1,96 @@
+#include <Arduino.h>
+#include <WiFi.h>
+#include <FirebaseESP32.h>
+#include <DHTesp.h>
+
+#include "addons/TokenHelper.h"
+#include "addons/RTDBHelper.h"
+
+#define WIFI_SSID "Hasenet"
+#define WIFI_PASSWORD "hase%haesin"
+
+#define API_KEY "AIzaSyAW71ttFo_XxjWSslGRmp5M9qt2vbhCE3s"
+#define DATABASE_URL "intelligent-plant-default-rtdb.europe-west1.firebasedatabase.app"
+
+#define DATABASE_EMAIL ""
+#define DATABASE_PASSWORD ""
+
+#define DHT_PIN 34
+
+DHTesp dhtSensor = DHTesp();
+
+FirebaseData fbdo;
+FirebaseAuth auth;
+FirebaseConfig config;
+
+unsigned long sendDataPrevMillis = 0;
+bool signupSuccess = false;
+unsigned maxConnectingAttempts = 50; 
+
+float waterValue = 0;
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  dhtSensor.setup(WATE_SENSOR_PIN, DHTesp::DHT22);
+
+  Serial.print("Connecting to ");
+  Serial.print(WIFI_SSID);
+  Serial.print("\n");
+
+  int connectingAttempts = 0;
+  while (WiFi.status() != WL_CONNECTED) {
+    if (connectingAttempts < maxConnectingAttempts) {
+      Serial.print(".");
+    } else {
+      Serial.print("Error while Connecting! - Timeout -");
+    }
+
+    connectingAttempts++;
+    delay(300);
+  }
+
+  Serial.println();
+  Serial.print("Connected to WiFi with IP: ");
+  Serial.print(WiFi.localIP());
+  Serial.println();
+
+  config.api_key = API_KEY;
+  config.database_url = DATABASE_URL;
+  
+  if (Firebase.signUp(&config, &auth, DATABASE_EMAIL, DATABASE_PASSWORD)) {
+    Serial.print("Sign-Up Succeed!");
+
+    signupSuccess = true;
+  } else {
+    Serial.printf("%s\n", config.signer.signupError.message.c_str());
+  }
+
+  config.token_status_callback = tokenStatusCallback;
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+
+  // Pinmodes
+  pinMode(WATE_SENSOR_PIN, INPUT);
+}
+
+void loop() {
+  if (Firebase.ready() && signupSuccess == true && (millis() - sendDataPrevMillis > 5000 || sendDataPrevMillis == 0)) {
+    sendDataPrevMillis = millis();
+    
+    // Get data from DHT22
+    waterValue = analogRead(WATE_SENSOR_PIN); //dhtSensor.getTemperature();
+
+    if (Firebase.setFloat(fbdo, "Sensor/temperature_data", waterValue)) {
+      Serial.println();
+      Serial.print(waterValue);
+      Serial.print(" - Successfully saved to ");
+      Serial.print(fbdo.dataPath());
+      Serial.print(" (");
+      Serial.print(fbdo.dataType());
+      Serial.print(")");
+    } else {
+      Serial.println("FAILED: "   + fbdo.errorReason());
+    }
+  } 
+}
