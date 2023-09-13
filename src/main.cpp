@@ -21,10 +21,22 @@
 #define FIREBASE_PROJECT_ID "intelligent-plant"
 
 #define WATER_SENSOR_PIN 36
+#define LIGHT_SENSOR_PIN 33
+#define TEMPERATURE_SENSOR_PIN 39
 #define PUMP_RELAY_PIN 32
 
 #define WET 1100
-#define DRY 3200
+#define DRY 3700
+
+#define DARK 4095
+#define BRIGHT 300
+
+#define HIGH_TEMP 40 // analog Value: 1122
+#define LOW_TEMP 0 //analogValue: 624
+
+#define ADC_VREF_mV    1200.0 // in millivolt
+#define ADC_RESOLUTION 4096.0
+
 #define MIN_WATER_PERCENTAGE 50
 
 FirebaseData fbdo;
@@ -37,6 +49,17 @@ unsigned maxConnectingAttempts = 50;
 
 int waterValue = 0;
 int waterPercantageValue = 0;
+
+int lightValue = 0;
+int lightPercantageValue = 0;
+int lightLuxValue = 0;
+
+int tempValue = 0;
+int tempPercantageValue = 0;
+int tempC = 0;
+int tempF = 0;
+
+float milliVolt = 0;
 
 String uid;
 String plant = "plant_0";
@@ -106,7 +129,6 @@ void setup()
   Serial.print("Connected to WiFi with IP: ");
   Serial.print(WiFi.localIP());
   Serial.println();
-
   
   lcd.printNew1Row("Connected. IP:", 0, 0);
   lcd.print1Row(WiFi.localIP().toString(), 0, 1);
@@ -157,6 +179,8 @@ void setup()
 
   // Pinmodes
   pinMode(WATER_SENSOR_PIN, INPUT);
+  pinMode(LIGHT_SENSOR_PIN, INPUT);
+  pinMode(TEMPERATURE_SENSOR_PIN, INPUT);
   pinMode(PUMP_RELAY_PIN, OUTPUT);
 }
 
@@ -165,6 +189,16 @@ void loop() {
   // Get and Process water Value
   waterValue = analogRead(WATER_SENSOR_PIN);
   waterPercantageValue = map(waterValue, WET, DRY, 100, 0);
+
+  lightValue = analogRead(LIGHT_SENSOR_PIN);
+  lightPercantageValue = map(lightValue, BRIGHT, DARK, 100, 0);
+  lightLuxValue = (2500 / (lightValue * 4095)) - 500;
+
+  tempValue = analogRead(TEMPERATURE_SENSOR_PIN);
+  milliVolt = tempValue * (ADC_VREF_mV / ADC_RESOLUTION);
+  tempC = milliVolt / 10;
+  tempF = (tempC * 1.8) + 32;
+  tempPercantageValue = map(tempC, HIGH_TEMP, LOW_TEMP, 100, 0);
 
   if (waterPercantageValue <= MIN_WATER_PERCENTAGE)
   {
@@ -192,12 +226,14 @@ void loop() {
       PlantData.set("fields/data/mapValue/fields/Water/mapValue/fields/unneutralized/integerValue", std::to_string(waterValue));
       PlantData.set("fields/data/mapValue/fields/Water/mapValue/fields/inPercent/integerValue", std::to_string(waterPercantageValue));
 
-      PlantData.set("fields/data/mapValue/fields/Light/mapValue/fields/inPercent/integerValue", std::to_string(random(1000)));
-      PlantData.set("fields/data/mapValue/fields/Light/mapValue/fields/inLux/integerValue", std::to_string(random(1000)));
+      PlantData.set("fields/data/mapValue/fields/Light/mapValue/fields/inPercent/integerValue", std::to_string(lightPercantageValue));
+      PlantData.set("fields/data/mapValue/fields/Light/mapValue/fields/inLux/integerValue", std::to_string(100));
+      PlantData.set("fields/data/mapValue/fields/Light/mapValue/fields/unneutralized/integerValue", std::to_string(lightValue));
 
-      PlantData.set("fields/data/mapValue/fields/Temperature/mapValue/fields/inPercent/integerValue", std::to_string(random(1000)));
-      PlantData.set("fields/data/mapValue/fields/Temperature/mapValue/fields/in°C/integerValue", std::to_string(random(1000)));
-      PlantData.set("fields/data/mapValue/fields/Temperature/mapValue/fields/in°F/integerValue", std::to_string(random(1000)));
+      PlantData.set("fields/data/mapValue/fields/Temperature/mapValue/fields/inPercent/integerValue", std::to_string(tempPercantageValue));
+      PlantData.set("fields/data/mapValue/fields/Temperature/mapValue/fields/in°C/integerValue", std::to_string(tempC));
+      PlantData.set("fields/data/mapValue/fields/Temperature/mapValue/fields/in°F/integerValue", std::to_string(tempF));
+      PlantData.set("fields/data/mapValue/fields/Temperature/mapValue/fields/unneutralized/integerValue", std::to_string(tempValue));
       
       Serial.print("set data: ");
       Serial.print(PlantData.raw());
@@ -223,9 +259,9 @@ void loop() {
     lcd.print1Row("W: ", 0, 1);
     lcd.print1Row(std::to_string(waterPercantageValue).c_str(), 2, 1);
     lcd.print1Row("L:", 5, 1);
-    lcd.print1Row(std::to_string(waterPercantageValue).c_str(), 7, 1);
+    lcd.print1Row(std::to_string(lightPercantageValue).c_str(), 7, 1);
     lcd.print1Row("T: ", 10, 1);
-    lcd.print1Row(std::to_string(waterPercantageValue).c_str(), 12, 1);
+    lcd.print1Row(std::to_string(tempC).c_str(), 12, 1);
 
     /*
     // Sending data to RTDB
