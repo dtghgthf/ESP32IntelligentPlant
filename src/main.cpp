@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <Firebase_ESP_Client.h>
 #include <LiquidCrystal_I2C.h>
+#include <Preferences.h>
 
 #include <locale>
 #include <codecvt>
@@ -9,6 +10,8 @@
 
 #include "addons/TokenHelper.h"
 #include "addons/RTDBHelper.h"
+
+#define isLinkingStatePreferencesName "isLinkingState"
 
 #define WIFI_SSID "Hasenet"
 #define WIFI_PASSWORD "hase%haesin"
@@ -38,6 +41,9 @@
 #define ADC_RESOLUTION 4096.0
 
 #define MIN_WATER_PERCENTAGE 50
+
+Preferences preferences;
+bool isLinkingState;
 
 FirebaseData fbdo;
 FirebaseAuth auth;
@@ -99,8 +105,11 @@ void setup()
 {
   Serial.begin(115200);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  preferences.begin("intelplant", false);
 
   lcd.initDisplay();
+
+  isLinkingState = preferences.getBool(isLinkingStatePreferencesName, true);
 
   Serial.print("Connecting to ");
   Serial.print(WIFI_SSID);
@@ -132,6 +141,19 @@ void setup()
   
   lcd.printNew1Row("Connected. IP:", 0, 0);
   lcd.print1Row(WiFi.localIP().toString(), 0, 1);
+
+  delay(1000);
+
+  preferences.putBool(isLinkingStatePreferencesName, true); // NO!
+
+  if (isLinkingState) {
+    lcd.printNew1Row("Please Link with", 0, 0);
+    lcd.print1Row("App to get Started", 0, 1);
+    delay(5000);
+    lcd.printNew1Row("Linked!", 0, 0);
+    preferences.putBool(isLinkingStatePreferencesName, false);
+    // Link
+  }
 
   delay(1000);
 
